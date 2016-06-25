@@ -26,6 +26,7 @@ Spec Documentation
 .. _VBox虚拟机网络设置: http://luokr.com/p/12
 
 - 3.所以此工具的设计分成几个部分来完成的
+
     - 获得未初始化的网卡信息。具体通过python的os.popen来向vm发shell命令。从而解析获得的字符串并匹配出需要的网卡的名字和信息。
     - 配置当前环境下的网络proxy,由于我的环境是需要用proxy才能上网的，所以我配置了当前用户下的.bashrc文件。
     - 配置host-only网卡信息，这一步的操作是在/etc/network/interfaces中完成的。
