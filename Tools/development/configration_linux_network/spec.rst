@@ -7,7 +7,9 @@ Spec Documentation
 
 **Run**: python 'net_init.py'_ ip_address
 =====================
-.. _net_init.py: ./net_init.py
+'net_init.py'_
+
+.. _net_init.py: ../net_init.py
 
 **Parameter**: ip_address    需要设置网卡的ip
 ===================
