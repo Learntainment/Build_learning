@@ -26,7 +26,7 @@ if __name__ == "__main__":
         flag = 0
     else:
         raise Exception("Invalid flag! Not find valid network adapter ", flag)
-        
+
     print ("Configure proxy setting for system")
 
     bashrc_file = open('/home/e/.bashrc', 'a+')
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         raise Exception("Invalid flag! Failed network adapter restart ", flag)
 
     print ("Configure ssh server setting")
-    
+
     ssh_config = open('/home/e/.ssh/config', 'w')
     ssh_config_list = ["host a", "\nhostname a", "\nuser huia",\
                       "\nhost b", "\nhostname b", "\nuser huib",\
