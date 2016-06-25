@@ -5,10 +5,8 @@ Spec Documentation
 **Purpose**: It will configure your linux network automatically
 =====================
 
-**Run**: python 'net_init.py'_ ip_address
+**Run**: python `net_init.py`_ ip_address
 =====================
-
-`net_init.py`_
 
 .. _net_init.py: net_init.py
 
@@ -21,7 +19,7 @@ Spec Documentation
 >>>>>>>>>>>>>>>>>>>>
 1. 通过vitual box 建立多台VM 比如：A B C
 #. 众所周知，VBOX 建立的虚拟机需要设置第二块网卡为Host-only 并且指定好一个网段的ip地址才能与其他的机器通过SSH的方式通信，访问。
-具体参见：'VBox虚拟机网络设置'_.
+具体参见：`VBox虚拟机网络设置`_
 
 .. _VBox虚拟机网络设置: http://luokr.com/p/12
 
