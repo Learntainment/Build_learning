@@ -10,8 +10,11 @@ Spec Documentation
 
 .. _net_init.py: net_init.py
 
-**Parameter**: ip_address    需要设置网卡的ip
+**Parameter**: 
 ===================
+| 参数选项 | 描述信息 |
+| ip_address | 需要设置网卡的ip |
+
 
 **Detail**:
 ====================
