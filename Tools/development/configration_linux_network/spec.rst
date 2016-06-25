@@ -7,7 +7,8 @@ Spec Documentation
 
 **Run**: python 'net_init.py'_ ip_address
 =====================
-'net_init.py'__
+
+`net_init.py`__
 
 .. __net_init.py: ../net_init.py
 
