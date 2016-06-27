@@ -8,7 +8,7 @@ Google test这个项目在Github上面，具体请见`这里`_
 
 .. _这里: https://github.com/google/googletest
 
-```
+
 git clone https://github.com/google/googletest
 ```
 
