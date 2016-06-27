@@ -41,5 +41,10 @@ google test的具体编译过程如下：
 
 文件编译 g++ -isystem include/ -pthread addsubfunc.cpp muldivfunc.cpp testall.cpp -o main -std=c++11 lib/libgtest.a
 
+**Run**
+==========
+执行编译好的文件
+./main
+
 本文版权归个人所有，如需转载，请注明出处
 =====================
