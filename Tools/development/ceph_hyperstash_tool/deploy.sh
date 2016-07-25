@@ -61,6 +61,18 @@ function double_check_file()
     return $sum
 }
 #pause 'Press any key to continue...'
+
+function error_handle()
+{
+    check_cmd_return=$?
+    if [ $check_cmd_return != 0 ]; then
+        echo "last command failed"
+        cd $DEPLOY_PATH/
+        rm -rf hyperstash
+        exit 1
+    fi
+}
+
 if [ "$1" != "clean" ]; then
 
     #check file status
@@ -68,11 +80,8 @@ if [ "$1" != "clean" ]; then
     CPU_NUM=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
     let COMPILE_NUM=CPU_NUM/2
     check_file_result=0
-    hyperstash_result=0
-    hyperstash_test_result=0
     ceph_result=0
-    vstart_result=0
-    data_store_device_result=0
+    check_cmd_return=0
     rocksdb_flag=0
     ceph_flag=0
     fio_flag=0
@@ -144,6 +153,8 @@ if [ "$1" != "clean" ]; then
     check_file_result=$?
     if [ $check_file_result != 4 ]; then
         echo "Download Repository Failed"
+        cd $DEPLOY_PATH/
+        rm -rf hyperstash
         exit 1
     fi
 
@@ -155,14 +166,18 @@ if [ "$1" != "clean" ]; then
     if [ "$1" = "yuanhui" ]; then
         tsocks git fetch yuanhui
         git checkout yuanhui/$CHECKOUT_BRANCH
+        error_handle
     elif [ "$1" = "zhouyuan" ]; then
         tsocks git fetch zhouyuan
         git checkout zhouyuan/$CHECKOUT_BRANCH
+        error_handle
     elif [ "$1" = "chendi" ]; then
         tsocks git fetch chendi
         git checkout chendi/$CHECKOUT_BRANCH
+        error_handle
     else
         git checkout master -B test
+        error_handle
     fi
     #apply patch for librbd
     cp $DEPLOY_PATH/hyperstash/librbd-hyperstash.patch $DEPLOY_PATH/ceph/
@@ -173,24 +188,16 @@ if [ "$1" != "clean" ]; then
     cp $DEPLOY_PATH/hyperstash/rbc.conf /etc/rbc/.
 
     #Hyperstash unittest
-
+    echo "Hyperstash unittest"
     cd $DEPLOY_PATH/hyperstash
     make test
-    hyperstash_test_result=$?
-    if [ $hyperstash_test_result != 0 ]; then
-        echo "Hyperstash unittest failed"
-        exit 1
-    fi
+    error_handle
     make clean
     make && make install
 
     #Error Handle
 
-    hyperstash_result=$?
-    if [ $hyperstash_result != 0 ]; then
-        echo "Install hyperstash failed"
-        exit 1
-    fi
+    error_handle
 
     #apply patch for ceph librbd
 
@@ -201,15 +208,12 @@ if [ "$1" != "clean" ]; then
         make uninstall
         cp -r $DEPLOY_PATH/ceph/src/include/rbd /usr/local/include/
         cp -r $DEPLOY_PATH/ceph/src/include/rados/ /usr/local/include/
+        echo "compile ceph"
         make -j$COMPILE_NUM && make install
 
         #Error Handle
 
-        ceph_result=$?
-        if [ $ceph_result != 0 ]; then
-            echo "Install ceph patch failed"
-            exit 1
-        fi
+        error_handle
     else
         echo "Have applied patch"
     fi
@@ -222,11 +226,7 @@ if [ "$1" != "clean" ]; then
 
     #Error Handle
 
-    vstart_result=$?
-    if [ $vstart_result != 0 ]; then
-        echo "vstart failed"
-        exit 1
-    fi
+    error_handle
 
     mkdir -p /etc/ceph && cp ceph.conf /etc/ceph/ceph.conf
     ldconfig
@@ -239,15 +239,11 @@ if [ "$1" != "clean" ]; then
     done
 
     rbd create testimage --size 81920M
+    echo "get mount device"
     data_store_dev=$(fdisk -l | grep 200.0)
 
     #Error Handle
-
-    data_store_device_result=$?
-    if [ $data_store_device_result != 0 ]; then
-        echo "unmount data device"
-        exit 1
-    fi
+    error_handle
     data_dev_list=($data_store_dev)
     sed -i '/DataStoreDev/c DataStoreDev='${data_dev_list[1]:0:8}'' /etc/rbc/rbc.conf
 
