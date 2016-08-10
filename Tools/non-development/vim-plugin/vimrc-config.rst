@@ -8,8 +8,11 @@ ctags and taglist
 =================
 
 这两个插件保证了在vim中可以显示函数列表，并且可以利用他们来实现调用函数的功能，具体安装如下
+
  | sudo apt-get install ctags
+ 
  | sudo apt-get install vim-scripts
+ 
  | vim-addons install taglist
 
 =================================
