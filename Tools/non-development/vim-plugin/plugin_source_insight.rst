@@ -40,6 +40,7 @@ Tips
 
  | <F7> show ctags tag list context
  | <F8> call tag list
+ | <F6> call nerdtree
  | <F9> call the SrcExpl as the source insight function
  | <space> back to last function
 
