@@ -47,7 +47,7 @@ google test的具体编译过程如下：
 ./main
 
 ==============
-**TWO For googletest**
+**TWO For googlemock**
 ==============
 
 **Get**
