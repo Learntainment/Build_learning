@@ -1,5 +1,5 @@
 ==============
-**ONE**
+**ONE For googletest**
 ==============
 
 **Get**
@@ -34,7 +34,7 @@ ar -rv libgtest.a gtest-all.o
 google test的具体编译过程如下：
 参考 `测试用例`_ 你可以拷贝这些在你的环境中。
 
-.. _测试用例: test_example/
+.. _测试用例: googletest_example/
 
 个人习惯，我将libgtest.a 放在了lib这个文件夹中，并将gtest放在了include文件夹下
 
@@ -45,6 +45,59 @@ google test的具体编译过程如下：
 ==========
 执行编译好的文件
 ./main
+
+==============
+**TWO For googletest**
+==============
+
+**Get**
+============
+Google test这个项目在Github上面，具体请见 `这里`_
+
+
+.. _这里: https://github.com/google/googletest
+
+
+git clone https://github.com/google/googletest
+
+
+**Install**
+==============
+google mock的编译方式有些区别。具体如下：
+
+
+编译生成gtest-all.o文件
+
+g++ -isystem googletest/include -Igoogletest/ -isystem googlemock/include/ -Igooglemock/ -pthread -c googletest/src/gtest-all.cc
+
+编译生成gmock-all.o文件
+
+g++ -isystem googletest/include -Igoogletest/ -isystem googlemock/include/ -Igooglemock/ -pthread -c googlemock/src/gmock-all.cc
+
+再生成.a的静态库文件
+
+ar -rv libgmock.a gtest-all.o gmock-all.o
+
+最后将include下的gtest 和 libgmock.a 一起copy到自己的项目中去。环境安装完成
+
+
+**Compile**
+==========
+google mock的具体编译过程如下：
+参考 `测试用例`_ 你可以拷贝这些在你的环境中。
+
+.. _测试用例: googlemock_example/
+
+个人习惯，我将libgmock.a 放在了lib这个文件夹中，并将gtest和gmock放在了include文件夹下
+
+
+文件编译 g++ -isystem include/ -pthread Footest.cpp -o main -std=c++11 lib/libgmock.a
+
+**Run**
+==========
+执行编译好的文件
+./main
+
 
 本文版权归个人所有，如需转载，请注明出处
 =====================
