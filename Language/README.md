@@ -2,4 +2,5 @@
 ## 1.Re-Structured Text learning
 ### [ReStructuredText](./ReStructuredText.rst)
 ## 2.Cplus learning
-### a. [reference](./C_plus/reference/ref_class.cpp)
+### a. [reference](./C_plus/reference/)
+### b. [template](./C_plus/template/)
