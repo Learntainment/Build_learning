@@ -6,3 +6,4 @@
 ### b. [template](./C_plus/template/)
 ### c. [STL](./C_plus/STL/)
 #### @1. [forward](./C_plus/STL/forward/)
+### d. [lambda](./C_plus/lambda/)
