@@ -10,3 +10,4 @@
 ### e. [linux C](./C_plus/linux_c/)
 #### @1. [pread](./C_plus/linux_c/pread/)
 #### @2. [writev](./C_plus/linux_c/writev/)
+#### @3. [lseek](./C_plus/linux_c/lseek/)
