@@ -11,3 +11,6 @@
 #### @1. [pread](./C_plus/linux_c/pread/)
 #### @2. [writev](./C_plus/linux_c/writev/)
 #### @3. [lseek](./C_plus/linux_c/lseek/)
+## 3. Python
+### a. [add_input](./python/add_input.py)
+
