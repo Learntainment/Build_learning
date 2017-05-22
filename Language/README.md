@@ -6,7 +6,7 @@
 - b. [template](./C_plus/template/)
 - c. [STL](./C_plus/STL/)
   - 1. [forward](./C_plus/STL/forward/)
-  - 2. [function](./C_plus/STL/function)
+  - 2. [function](./C_plus/STL/function)
 - d. [lambda](./C_plus/lambda/)
 - e. [linux C](./C_plus/linux_c/)
   - 1. [pread](./C_plus/linux_c/pread/)
