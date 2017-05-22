@@ -12,6 +12,7 @@
   - 2. [writev](./C_plus/linux_c/writev/)
   - 3. [lseek](./C_plus/linux_c/lseek/)
 - f. [alignof](./C_plus/alignof/)
+- g. [inherit](./C_plus/inherit/)
 ## 3. Python
 - a. [add_input](./python/add_input.py)
 
