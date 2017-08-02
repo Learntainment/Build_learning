@@ -15,6 +15,8 @@
   - 3. [lseek](./C_plus/linux_c/lseek/)
 - f. [alignof](./C_plus/alignof/)
 - g. [inherit](./C_plus/inherit/)
+- h. [boost](./C_plus/boost/)
+  - 1. [bind](./C_plus/boost/bind/)
 ## 3. Python
 - a. [add_input](./python/add_input.py)
 
