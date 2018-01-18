@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Clean the workspace
+bazel clean --async
+
+# Remove the *.whl file generated before
+rm ~/tmp/*.whl
+
+# By default, it will build the eigen version
+version_to_build=0
+
+# Opt parser
+while getopts ":ht:" opt; do
+    case ${opt} in
+        h ) echo "opt h" ;;
+        t )
+            case $OPTARG in
+                eigen ) version_to_build=0 ;;
+                mkl ) version_to_build=1 ;;
+                mkldnn ) version_to_build=2 ;;
+                : ) echo "Invalid version: eigen, mkl, mkldnn" ;;
+            esac
+            ;;
+        \? ) echo "Usage: build_tf [-t] VERSION (eigen, mkl, mkldnn), eigen by default" ;;
+    esac
+done
+
+# Build the TensorFlow
+if [ $version_to_build -eq 0 ]
+then
+    echo "Eigen will be built..."
+    bazel build --copt -O3 -c opt //tensorflow/tools/pip_package:build_pip_package
+elif [ $version_to_build -eq 1 ]
+then
+    echo "MKL will be built..."
+    bazel build --copt -O3 --config=mkl -c opt //tensorflow/tools/pip_package:build_pip_package
+elif [ $version_to_build -eq 2 ]
+then
+    echo "MKLDNN will be built..."
+    bazel build --copt -O3 --copt=-DINTEL_MKL_DNN --config=mkl -c opt //tensorflow/tools/pip_package:build_pip_package
+else
+    echo "Internal ERROR: $version_to_build"
+fi
+
+# Generate the .whl file
+./bazel-bin/tensorflow/tools/pip_package/build_pip_package ~/tmp/
+
+# Install the .whl file, uninstall first
+pip uninstall -y tensorflow
+pip install ~/tmp/*.whl
