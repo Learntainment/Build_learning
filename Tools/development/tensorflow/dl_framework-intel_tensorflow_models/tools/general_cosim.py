@@ -13,6 +13,7 @@ Change Activity:
         Tian, Shilei: 2017-12-14 First work
         Tian, Shilei: 2017-12-20 Improve the comparison strategy
         Tian, Shilei: 2018-01-11 Added the skipping feature
+        Tian, Shilei: 2018-01-17 Added the IOError handler
 -----------------------------------------------------------------------------------------------------------------------
 """
 import argparse
@@ -45,8 +46,6 @@ if __name__ == '__main__':
     with open(layer_file, 'r') as f:
         graph = f.read()
         graph = graph.splitlines()
-
-    assert graph
 
     # Accumulative error
     accumulative_error = 0.0
