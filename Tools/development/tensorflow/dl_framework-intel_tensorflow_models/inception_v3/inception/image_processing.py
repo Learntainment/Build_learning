@@ -48,10 +48,10 @@ tf.app.flags.DEFINE_integer('batch_size', 32,
                             """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('image_size', 299,
                             """Provide square images of this size.""")
-tf.app.flags.DEFINE_integer('num_preprocess_threads', 4,
+tf.app.flags.DEFINE_integer('num_preprocess_threads', 1,
                             """Number of preprocessing threads per tower. """
                             """Please make this a multiple of 4.""")
-tf.app.flags.DEFINE_integer('num_readers', 4,
+tf.app.flags.DEFINE_integer('num_readers', 1,
                             """Number of parallel readers during train.""")
 
 # Images are preprocessed asynchronously using multiple threads specified by
@@ -98,7 +98,7 @@ def inputs(dataset, batch_size=None, num_preprocess_threads=None):
   with tf.device('/cpu:0'):
     images, labels = batch_inputs(
         dataset, batch_size, train=False,
-        num_preprocess_threads=num_preprocess_threads,
+        num_preprocess_threads=1,
         num_readers=1)
 
   return images, labels
@@ -177,7 +177,8 @@ def distort_color(image, thread_id=0, scope=None):
     color-distorted image
   """
   with tf.name_scope(values=[image], name=scope, default_name='distort_color'):
-    color_ordering = thread_id % 2
+    # color_ordering = thread_id % 2
+    color_ordering = 0
 
     if color_ordering == 0:
       image = tf.image.random_brightness(image, max_delta=32. / 255., seed=1)
@@ -239,6 +240,7 @@ def distort_image(image, height, width, bbox, thread_id=0, scope=None):
         aspect_ratio_range=[0.75, 1.33],
         area_range=[0.05, 1.0],
         max_attempts=100,
+        seed=1, seed2=1,
         use_image_if_no_bounding_boxes=True)
     bbox_begin, bbox_size, distort_bbox = sample_distorted_bounding_box
     if not thread_id:
@@ -254,7 +256,8 @@ def distort_image(image, height, width, bbox, thread_id=0, scope=None):
     # ratio is not respected. We select a resize method in a round robin
     # fashion based on the thread number.
     # Note that ResizeMethod contains 4 enumerated resizing methods.
-    resize_method = thread_id % 4
+    # resize_method = thread_id % 4
+    resize_method = 0
     distorted_image = tf.image.resize_images(distorted_image, [height, width],
                                              method=resize_method)
     # Restore the shape since the dynamic slice based upon the bbox_size loses
@@ -443,9 +446,9 @@ def batch_inputs(dataset, batch_size, train, num_preprocess_threads=None,
     if num_preprocess_threads is None:
       num_preprocess_threads = FLAGS.num_preprocess_threads
 
-    if num_preprocess_threads % 4:
-      raise ValueError('Please make num_preprocess_threads a multiple '
-                       'of 4 (%d % 4 != 0).', num_preprocess_threads)
+    # if num_preprocess_threads % 4:
+    #   raise ValueError('Please make num_preprocess_threads a multiple '
+    #                    'of 4 (%d % 4 != 0).', num_preprocess_threads)
 
     if num_readers is None:
       num_readers = FLAGS.num_readers
