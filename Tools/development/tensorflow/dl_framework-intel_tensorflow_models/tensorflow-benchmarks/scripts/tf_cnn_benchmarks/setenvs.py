@@ -24,6 +24,7 @@ class arglist :
     model = 'alexnet'
     data_dir = None
     num_omp_threads = None
+    data_threads = 1
 def setenvs(inpargv):
     args = arglist()
     for i in range(0,len(inpargv)-1) :

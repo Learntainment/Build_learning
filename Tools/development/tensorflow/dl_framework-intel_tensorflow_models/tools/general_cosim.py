@@ -14,7 +14,7 @@ Change Activity:
         Tian, Shilei: 2017-12-20 Improve the comparison strategy
         Tian, Shilei: 2018-01-11 Added the skipping feature
         Tian, Shilei: 2018-01-17 Added the IOError handler
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 """
 import argparse
 import numpy as np
@@ -24,9 +24,9 @@ import struct
 if __name__ == '__main__':
     # Parse the opts and args
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--mkl_dir', '-m', default='data_dump_mkl', help='The directory of mkl dump')
+    parser.add_argument('--mkl_dir', '-m', default='data_dump_mkldnn', help='The directory of mkl dump')
     parser.add_argument('--eigen_dir', '-e', default='data_dump_eigen', help='The directory of eigen dump')
-    parser.add_argument('--layer_file', '-l', default='layers.txt', help='The *eigen* layer file')
+    parser.add_argument('--layer_file', '-l', default='data_dump_eigen/layers.txt', help='The *eigen* layer file')
     parser.add_argument('--actol', type=float, default=1.0, help='*actol* is for accumulative error')
     parser.add_argument('--rtol', type=float, default=1e-2, help='The rtol')
     parser.add_argument('--atol', type=float, default=1e-3, help='The atol')
@@ -84,7 +84,8 @@ if __name__ == '__main__':
                 mkl_data = np.asarray(mkl_data)
                 eignen_data = np.asarray(eignen_data)
 
-                np.testing.assert_allclose(mkl_data, eignen_data, rtol=rtol, atol=atol, equal_nan=True)
+                np.testing.assert_allclose(mkl_data, eignen_data, rtol=rtol, atol=atol, equal_nan=True,
+                                           err_msg='Mismatch found in the node {0}'.format(node[:-4].replace('#', '/')))
         except IOError:
             print('[\033[93mNOFILE\033[0m]')
             continue
