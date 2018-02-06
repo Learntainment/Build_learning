@@ -1,18 +1,24 @@
 #!/bin/bash
 
-# Clean the workspace
-bazel clean --async
-
-# Remove the *.whl file generated before
-rm ~/tmp/*.whl
+print_help() {
+    echo "Usage: build_tf [OPTIONS]"
+    echo "-h Print this information."
+    echo "-t [VERSION] Version to be built, which could be either eigen, mkl, or mkldnn. By default, it would build eigen."
+    echo "-r Resume building. By default, each building will clean the workspace first. If this option is specified, the workspace will not be cleaned."
+    exit
+}
 
 # By default, it will build the eigen version
 version_to_build=0
 
+# By default, it'll build from scratch. If the option `-r` specified, it will not clean the workspace.
+build_from_scratch=1
+
 # Opt parser
-while getopts ":ht:" opt; do
+while getopts ":ht:r" opt; do
     case ${opt} in
-        h ) echo "opt h" ;;
+        h )
+            print_help ;;
         t )
             case $OPTARG in
                 eigen ) version_to_build=0 ;;
@@ -24,9 +30,16 @@ while getopts ":ht:" opt; do
                 ;;
             esac
             ;;
-        \? ) echo "Usage: build_tf [-t] VERSION (eigen, mkl, mkldnn), eigen by default" ;;
+        r ) build_from_scratch=0 ;;
+        \? ) print_help ;;
     esac
 done
+
+# Clean the workspace if needed
+if [ $build_from_scratch -eq 1 ]
+then
+    bazel clean --async
+fi
 
 # Build the TensorFlow
 if [ $version_to_build -eq 0 ]
@@ -52,9 +65,12 @@ then
     exit $?
 fi
 
+# Remove the *.whl file generated before
+rm ~/tmp/*.whl
+
 # Generate the .whl file
 ./bazel-bin/tensorflow/tools/pip_package/build_pip_package ~/tmp/
 
-# Install the .whl file, uninstall first
+# Install the .whl file, uninstalling first
 pip uninstall -y tensorflow
 pip install ~/tmp/*.whl

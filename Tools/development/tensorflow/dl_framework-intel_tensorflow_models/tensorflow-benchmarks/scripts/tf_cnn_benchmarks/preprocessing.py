@@ -308,7 +308,9 @@ def train_image(image_buffer,
         aspect_ratio_range=[0.75, 1.33],
         area_range=[0.05, 1.0],
         max_attempts=100,
-        use_image_if_no_bounding_boxes=True)
+        use_image_if_no_bounding_boxes=True,
+        seed=1, seed2=1
+    )
     bbox_begin, bbox_size, distort_bbox = sample_distorted_bounding_box
     if summary_verbosity >= 3:
       image = tf.image.decode_jpeg(image_buffer, channels=3,
@@ -339,7 +341,8 @@ def train_image(image_buffer,
 
     # This resizing operation may distort the images because the aspect
     # ratio is not respected.
-    image_resize_method = get_image_resize_method(resize_method, batch_position)
+    # image_resize_method = get_image_resize_method(resize_method, batch_position)
+    image_resize_method = 0
     if cnn_util.tensorflow_version() >= 11:
       distorted_image = tf.image.resize_images(
           image, [height, width],
@@ -361,7 +364,7 @@ def train_image(image_buffer,
           tf.expand_dims(distorted_image, 0))
 
     # Randomly flip the image horizontally.
-    distorted_image = tf.image.random_flip_left_right(distorted_image)
+    distorted_image = tf.image.random_flip_left_right(distorted_image, seed=1)
 
     if distortions:
       # Randomly distort the colors.
@@ -401,31 +404,31 @@ def distort_color(image, batch_position=0, distort_color_in_yiq=False,
 
     def distort_fn_0(image=image):
       """Variant 0 of distort function."""
-      image = tf.image.random_brightness(image, max_delta=32. / 255.)
+      image = tf.image.random_brightness(image, max_delta=32. / 255., seed=1)
       if distort_color_in_yiq:
         image = distort_image_ops.random_hsv_in_yiq(
             image, lower_saturation=0.5, upper_saturation=1.5,
-            max_delta_hue=0.2 * math.pi)
+            max_delta_hue=0.2 * math.pi, seed=1)
       else:
-        image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
-        image = tf.image.random_hue(image, max_delta=0.2)
-      image = tf.image.random_contrast(image, lower=0.5, upper=1.5)
+        image = tf.image.random_saturation(image, lower=0.5, upper=1.5, seed=1)
+        image = tf.image.random_hue(image, max_delta=0.2, seed=1)
+      image = tf.image.random_contrast(image, lower=0.5, upper=1.5, seed=1)
       return image
 
     def distort_fn_1(image=image):
       """Variant 1 of distort function."""
-      image = tf.image.random_brightness(image, max_delta=32. / 255.)
-      image = tf.image.random_contrast(image, lower=0.5, upper=1.5)
+      image = tf.image.random_brightness(image, max_delta=32. / 255., seed=1)
+      image = tf.image.random_contrast(image, lower=0.5, upper=1.5, seed=1)
       if distort_color_in_yiq:
         image = distort_image_ops.random_hsv_in_yiq(
             image, lower_saturation=0.5, upper_saturation=1.5,
-            max_delta_hue=0.2 * math.pi)
+            max_delta_hue=0.2 * math.pi, seed=1)
       else:
-        image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
-        image = tf.image.random_hue(image, max_delta=0.2)
+        image = tf.image.random_saturation(image, lower=0.5, upper=1.5, seed=1)
+        image = tf.image.random_hue(image, max_delta=0.2, seed=1)
       return image
 
-    image = utils.smart_cond(batch_position % 2 == 0, distort_fn_0,
+    image = utils.smart_cond(True, distort_fn_0,
                              distort_fn_1)
     # The random_* ops do not necessarily clamp.
     image = tf.clip_by_value(image, 0.0, 1.0)
@@ -516,7 +519,7 @@ class RecordInputImagePreprocessor(object):
         counter = counter.repeat()
         ds = tf.data.Dataset.zip((ds, counter))
         ds = ds.prefetch(buffer_size=self.batch_size)
-        ds = ds.shuffle(buffer_size=10000)
+        ds = ds.shuffle(buffer_size=10000, seed=1)
         ds = ds.repeat()
         ds = ds.apply(
             batching.map_and_batch(
@@ -531,7 +534,7 @@ class RecordInputImagePreprocessor(object):
       else:
         record_input = data_flow_ops.RecordInput(
             file_pattern=dataset.tf_record_pattern(subset),
-            seed=301,
+            seed=1,
             parallelism=64,
             buffer_size=10000,
             batch_size=self.batch_size,
@@ -616,9 +619,9 @@ class Cifar10ImagePreprocessor(object):
     image = tf.image.resize_image_with_crop_or_pad(
         image, self.height + 8, self.width + 8)
     distorted_image = tf.random_crop(image,
-                                     [self.height, self.width, self.depth])
+                                     [self.height, self.width, self.depth], seed=1)
     # Randomly flip the image horizontally.
-    distorted_image = tf.image.random_flip_left_right(distorted_image)
+    distorted_image = tf.image.random_flip_left_right(distorted_image, seed=1)
     if self.summary_verbosity >= 3:
       tf.summary.image('distorted_image', tf.expand_dims(distorted_image, 0))
     return distorted_image
@@ -660,7 +663,7 @@ class Cifar10ImagePreprocessor(object):
       raw_images, raw_labels = tf.train.shuffle_batch(
           [input_image, input_label], batch_size=self.batch_size,
           capacity=min_queue_examples + 3 * self.batch_size,
-          min_after_dequeue=min_queue_examples)
+          min_after_dequeue=min_queue_examples, seed=1)
 
       images = [[] for i in range(self.num_splits)]
       labels = [[] for i in range(self.num_splits)]
@@ -715,13 +718,13 @@ class SyntheticImagePreprocessor(object):
         input_shape,
         dtype=self.dtype,
         stddev=1e-1,
-        name='synthetic_images')
+        name='synthetic_images', seed=1)
     labels = tf.random_uniform(
         [self.batch_size],
         minval=0,
         maxval=dataset.num_classes - 1,
         dtype=tf.int32,
-        name='synthetic_labels')
+        name='synthetic_labels', seed=1)
     # Note: This results in a H2D copy, but no computation
     # Note: This avoids recomputation of the random values, but still
     #         results in a H2D copy.

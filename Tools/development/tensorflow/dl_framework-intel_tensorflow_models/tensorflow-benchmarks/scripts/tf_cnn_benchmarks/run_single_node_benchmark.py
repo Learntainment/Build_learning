@@ -235,7 +235,8 @@ def main():
   arg_parser.add_argument('-e', "--num_inter_threads", type=int, help='Specify the number threads between layers', dest="inter_op", default=None)
   arg_parser.add_argument('-o', "--num_omp_threads", help='Specify the number of OMP threads', type=int, dest="num_omp_threads", default=None)
   arg_parser.add_argument('-b', "--batch_size", help='The batch size', type=int, dest="batch_size", default=None)
-  
+  arg_parser.add_argument('--num_batches', help='number of batches to run, excluding warmup', type=int, dest="num_batches", default=1)
+
   # With dataset name specified
   arg_parser.add_argument('-i', "--data_dir", help="The data directory", dest="data_dir", default=None)
   arg_parser.add_argument('-n', "--data_name", help="The data name", dest="data_name", default=None)
@@ -254,6 +255,10 @@ def main():
 
   #This adds support for a --forward-only param with a default value of False. Only if '--forward-only' is on the command-line will the value be true.
   arg_parser.add_argument("--forward_only", help="Only do inference.", dest="forward_only", default=False)
+
+  # The steps starting dump
+  arg_parser.add_argument("--dump_after_steps", help="Only do inference.", dest="dump_after_steps", default=None)
+
   args = arg_parser.parse_args()
 
   #set default values based on cpu, data model and data dir
@@ -285,13 +290,17 @@ def main():
       ' --batch_size {batch_size}'
       ' --data_format {data_format}'
       ' --num_intra_threads {num_intra_threads}'
-      ' --num_inter_threads {num_inter_threads}').format(
+      ' --num_inter_threads {num_inter_threads}'
+      ' --train_dir {train_dir}'
+      ' --num_batches {num_batches}').format(
       model=args.model,
       cpu=args.cpu,
       batch_size=str(batch_size),
       data_format=args.data_format,
       num_intra_threads=str(intra_op),
-      num_inter_threads=str(inter_op))
+      num_inter_threads=str(inter_op),
+      train_dir='/tmp/{0}_model'.format(args.model),
+      num_batches=args.num_batches)
 
   if args.forward_only:
     command_prefix += ' --forward_only {}'.format(args.forward_only)
@@ -303,6 +312,9 @@ def main():
       data_dir=args.data_dir,
       data_name=args.data_name,
       distortions=str(args.distortions) )
+
+  if args.dump_after_steps:
+      command_prefix += ' --dump_after_steps {0}'.format(args.dump_after_steps)
 
   if args.job_name is None:
     cmd = command_prefix

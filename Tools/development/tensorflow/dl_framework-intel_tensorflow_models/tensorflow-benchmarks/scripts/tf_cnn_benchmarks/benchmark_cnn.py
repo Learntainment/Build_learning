@@ -87,10 +87,10 @@ _DEFAULT_PARAMS = {
                    'number of groups of batches processed in the image '
                    'producer.'),
     'num_batches':
-        _ParamSpec('integer', 100, 'number of batches to run, excluding '
+        _ParamSpec('integer', 1, 'number of batches to run, excluding '
                    'warmup'),
     'num_warmup_batches':
-        _ParamSpec('integer', None, 'number of batches to run before timing'),
+        _ParamSpec('integer', 0, 'number of batches to run before timing'),
     'autotune_threshold':
         _ParamSpec('integer', None, 'The autotune threshold for the models'),
     'num_gpus':
@@ -98,7 +98,7 @@ _DEFAULT_PARAMS = {
     'gpu_indices':
         _ParamSpec('string', '', 'indices of worker GPUs in ring order'),
     'display_every':
-        _ParamSpec('integer', 10,
+        _ParamSpec('integer', 1,
                    'Number of local steps after which progress is printed out'),
     'data_dir':
         _ParamSpec('string', None,
@@ -205,7 +205,7 @@ _DEFAULT_PARAMS = {
                    'If True, use tf.layers for neural network layers. This '
                    'should not affect performance or accuracy in any way.'),
     'tf_random_seed':
-        _ParamSpec('integer', 1234,
+        _ParamSpec('integer', 1,
                    'The TensorFlow random seed. Useful for debugging NaNs, as '
                    'this can be set to various values to see if the NaNs '
                    'depend on the seed.'),
@@ -371,6 +371,10 @@ _DEFAULT_PARAMS = {
                    'means results will be stored in cbuild datastore (note: '
                    'this option requires special permissions and meant to be '
                    'used from cbuilds).'),
+    'dump_after_steps':
+        _ParamSpec('integer', None,
+                   'Dump the data after the specified steps. None means the'
+                   ' data won\'t be dumped'),
 }
 
 
@@ -1129,6 +1133,9 @@ class BenchmarkCNN(object):
         done_fn = global_step_watcher.done
       loop_start_time = time.time()
       while not done_fn():
+        if self.params.dump_after_steps is not None and local_step >= self.params.dump_after_steps:
+            os.environ['TF_COSIM_START_DUMP'] = '1'
+
         if local_step == 0:
           log_fn('Done warm up')
           if execution_barrier:
@@ -1158,6 +1165,7 @@ class BenchmarkCNN(object):
         if summary_str is not None and is_chief:
           sv.summary_computed(sess, summary_str)
         local_step += 1
+
       loop_end_time = time.time()
       # Waits for the global step to be done, regardless of done_fn.
       if global_step_watcher:
@@ -1230,7 +1238,7 @@ class BenchmarkCNN(object):
   def _build_model(self):
     """Build the TensorFlow graph."""
     tf.set_random_seed(self.params.tf_random_seed)
-    np.random.seed(4321)
+    np.random.seed(self.params.tf_random_seed)
     phase_train = not (self.params.eval or self.params.forward_only)
 
     log_fn('Generating model')
@@ -1427,7 +1435,7 @@ class BenchmarkCNN(object):
     assert not self.params.staged_vars
 
     tf.set_random_seed(self.params.tf_random_seed)
-    np.random.seed(4321)
+    np.random.seed(self.params.tf_random_seed)
     phase_train = True
 
     log_fn('Generating model')
@@ -1541,12 +1549,12 @@ class BenchmarkCNN(object):
             dtype=input_data_type,
             mean=127,
             stddev=60,
-            name='synthetic_images')
+            name='synthetic_images', seed=1)
         images = tf.contrib.framework.local_variable(
             images, name='gpu_cached_images')
         labels = tf.random_uniform(
             labels_shape, minval=0, maxval=nclass-1,
-            dtype=tf.int32, name='synthetic_labels')
+            dtype=tf.int32, name='synthetic_labels', seed=1)
 
     with tf.device(self.devices[rel_device_num]):
       # Rescale from [0, 255] to [0, 2]
