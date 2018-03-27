@@ -16,7 +16,6 @@ if __name__ == "__main__":
     while (cmd_flag):
         cmd = 'python general_cosim.py -e ' + eigen_dir + ' -m ' + mkldnn_dir + ' -l ' + eigen_dir_layer + ' 1>>result.out 2>>result.err'
         cmd_flag = subprocess.call(cmd, shell=True)
-        #print "cmd_flag:   ", cmd_flag
         if (cmd_flag == 1):
             with open("result.err") as fp:
                 line_list = fp.readline()
@@ -24,23 +23,24 @@ if __name__ == "__main__":
                     per_line_list = line_list.split()
                     for single_per_line_list in per_line_list:
                         if (single_per_line_list == "node"):
-                            #print "single_per_line_list ------", per_line_list[5]
                             slash_line_list = per_line_list[5].split('/')
                             for single_slash_line_list in slash_line_list:
                                 if (single_slash_line_list == "Direction_Session"):
                                     ban_layer = per_line_list[5]
                                     break
                     line_list = fp.readline()
-                #print "ban_layer--------", ban_layer
             ban_layer_list = ban_layer.split('/')
             reorganization_ban_layer_line = ''
+            ban_flag = 0
             for single_ban_layer_list in ban_layer_list:
                 if (single_ban_layer_list == "v"):
-                    reorganization_ban_layer_line = 'Direction_Session/' + single_ban_layer_list
-                    continue
+                    ban_flag = ban_flag + 1
+                    if (ban_flag == 1):
+                        reorganization_ban_layer_line = 'Direction_Session/' + single_ban_layer_list
+                        continue
                 reorganization_ban_layer_line = reorganization_ban_layer_line + '#' + single_ban_layer_list
             reorganization_ban_layer_line = reorganization_ban_layer_line + '.dat\n'
-            print "reorganization_ban_layer_line-----", reorganization_ban_layer_line
+            #print "reorganization_ban_layer_line-----", reorganization_ban_layer_line
 
             #with open(eigen_dir_layer) as fs:
             with open('test_layers.txt') as fs:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
                     #print "reorganization_ban_layer_line-----", reorganization_ban_layer_line
                     if (each == reorganization_ban_layer_line):
                         layer_line_list[layer_num] = '#' + reorganization_ban_layer_line
-                        print "ban_layer ----", layer_line_list[layer_num]
+                        #print "ban_layer ----", layer_line_list[layer_num]
                         with open('new_layers.txt', 'w') as ft:
                             ft.writelines(layer_line_list)
                         break
@@ -63,12 +63,6 @@ if __name__ == "__main__":
             cp_cmd = subprocess.call("cp new_layers.txt test_layers.txt", shell=True)
         else:
             cmd_flag = 0
-        #result = subprocess.check_output(cmd, shell=True)
-        #result_list = result.split("\n")
-        #for per_result_list in result_list:
-        #    if per_result_list.strip().find('Traceback') == 0:
-        #        print "TEST RESULT-------------------", per_result_list
-        #        break
 
 
 
