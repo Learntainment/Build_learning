@@ -5,6 +5,20 @@
 
 using namespace std;
 
+void Swap1(int &a, int &b) {
+    if (a != b) {
+        a = a^b;
+        b = a^b;
+        a = a^b;
+    }
+}
+
+void Swap2(int *p, int *q) {
+    *p = *p+*q;
+    *q = *p-*q;
+    *p = *p-*q;
+}
+
 void Quick_Sort(int array[], int low, int high) {
     int i = low;
     int j = high;
@@ -144,6 +158,31 @@ void Insert3_Sort(int array[], int low, int high) {
     }
 }
 
+void Select_Sort(int array[], int low, int high) {
+    int count = high-low+1;
+    int i, j, min_n;
+    for (i = 0; i < count; i++) {
+        min_n = i;
+        for (j = i+1; j < count; j++) {
+            if (array[j] < array[min_n]) {
+                min_n = j;
+            }
+        }
+        Swap1(array[i], array[min_n]);
+    }
+}
+
+void Find_Once () {
+    const int MAXN = 15;
+    int a[MAXN] = {1, 347, 6, 9, 13, 65, 889, 712, 889, 347, 1, 9, 65, 13, 712};
+    int lostNum = 0;
+    for (int i = 0; i < MAXN; i++) {
+        lostNum ^= a[i];
+        cout << "lostNum: " << lostNum << endl;;
+    }
+    cout << "lost one is: " << lostNum << endl;
+}
+
 void Func_timer(void func(int*, int, int), int array[], int low, int high) {
     clock_t startTime,endTime;
     startTime = clock();
@@ -191,13 +230,14 @@ int main() {
     //Func_timer(Insert1_Sort, b2_array, 0, 29);
     //Func_timer(Quick_Sort, new_array, 0, 99);
     //Func_timer(Bubble2_Sort, rd_array1, 0, 99);
-    Func_timer(Insert2_Sort, rd_array, 0, 99);
+    //Func_timer(Insert2_Sort, rd_array, 0, 99);
+    //Func_timer(Select_Sort, rd_array, 0, 99);
 
     //Output(array, 0, 29);
     //Output(b1_array, 0, 29);
     //Output(b2_array, 0, 29);
     //Output(short_array, 0, 9);
-    Output(rd_array, 0, 99);
-
+    //Output(rd_array, 0, 99);
+    Find_Once();
 
 }
