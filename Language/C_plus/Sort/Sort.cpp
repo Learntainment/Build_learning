@@ -50,13 +50,10 @@ void Quick_Sort(int array[], int low, int high) {
 void Bubble1_Sort(int array[], int low, int high) {
     int i = low;
     int boundary = high;
-    int tmp = 0;
     for (i; i <= boundary; i++) {
         for (int j = low; j <= boundary-1; j++) {
             if (array[j] > array[j+1]) {
-                tmp = array[j];
-                array[j] = array[j+1];
-                array[j+1] = tmp;
+                Swap1(array[j], array[j+1]);
             }
         }
     }
@@ -65,20 +62,17 @@ void Bubble1_Sort(int array[], int low, int high) {
 void Bubble2_Sort(int array[], int low, int high) {
     int i = low;
     int boundary = high;
-    int tmp = 0;
     for (i; i <= boundary; i++) {
         for (int j = 1; j <= boundary-i; j++) {
             if (array[j-1] > array[j]) {
-                tmp = array[j-1];
-                array[j-1] = array[j];
-                array[j] = tmp;
+                Swap1(array[j], array[j-1]);
             }
         }
     }
 }
 
 void Bubble3_Sort(int array[], int low, int high) {
-    int j, k, tmp;
+    int j, k;
     bool flag;
 
     k = high-low+1;
@@ -87,9 +81,7 @@ void Bubble3_Sort(int array[], int low, int high) {
     	flag = false;
         for (j = 1; j < k; j++)
         	if (array[j - 1] > array[j]) {
-            	tmp = array[j-1];
-			    array[j-1] = array[j];
-				array[j] = tmp;
+                Swap1(array[j], array[j-1]);
                 flag = true;
             }
        	k--;
@@ -97,7 +89,7 @@ void Bubble3_Sort(int array[], int low, int high) {
 }
 
 void Bubble4_Sort(int array[], int low, int high) {
-	int j, k, tmp;
+	int j, k;
     int flag;
 
     flag = high-low+1;
@@ -106,9 +98,7 @@ void Bubble4_Sort(int array[], int low, int high) {
         flag = 0;
         for (j = 1; j < k; j++)
             if (array[j - 1] > array[j]) {
-                tmp = array[j-1];
-                array[j-1] = array[j];
-                array[j] = tmp;
+                Swap1(array[j], array[j-1]);
                 flag = j;
             }
     }
@@ -151,9 +141,7 @@ void Insert3_Sort(int array[], int low, int high) {
     int i,j;
     for (i=1; i<count; i++) {
         for (j=i-1; j>=0&&array[j+1]<array[j]; j--) {
-            int temp = array[j];
-            array[j] = array[j+1];
-            array[j+1] = temp;
+            Swap1(array[j], array[j+1]);
         }
     }
 }
@@ -172,13 +160,115 @@ void Select_Sort(int array[], int low, int high) {
     }
 }
 
-void Find_Once () {
+void Binary_Sort(int array[], int low, int high) {
+    for (int i = low; i<high-low+1; i++) {
+        int left = 0;
+        int right = i-1;
+        int mid = 0;
+        int temp = array[i];
+        while (left <= right) {
+            mid = (left+right)/2;
+            if (array[i] < array[mid]) {
+                right = mid-1;
+            }else{
+                left = mid+1;
+            }
+        }
+        for (int j = i-1; j>right; j--) {
+            array[j+1] = array[j];
+        }
+        array[right+1] = temp;
+    }
+}
+
+int Binary_Find(int array[], int length, int value) {
+    Quick_Sort(array, 0, length-1);
+    int low = 0;
+    int high = length-1;
+    while (low<=high) {
+        int mid = low + (high-low+1)/2;
+        if (array[mid] > value) {
+            high = mid-1;
+        } else if (array[mid] < value) {
+            low = mid+1;
+        } else {
+            return mid;
+        }
+    }
+    return -1;
+}
+
+int Binary_Find1(int array[], int length, int value) {
+    Quick_Sort(array, 0, length-1);
+    int low = 0;
+    int high = length-1;
+    while (low<=high) {
+        int mid = (low+high)/2;
+        if (array[mid] > value) {
+            high = mid-1;
+        } else if (array[mid] < value) {
+            low = mid+1;
+        } else {
+            return mid;
+        }
+    }
+    return -1;
+}
+
+int Recycle_Binary_Find(int array[], int length, int value) {
+    int low = 0;
+    int high = length-1;
+    while (low<=high) {
+        int mid = low+(high-low+1)/2;
+        if (value < array[mid]) {
+            if (array[low] <= array[low+(mid-low+1)/2] && array[low+(mid-low+1)/2] <= array[mid] && array[low] <= value) {
+                high = mid-1;
+            }else{
+                low = mid+1;
+            }
+        }else if (value > array[mid]) {
+            if (array[mid] <= array[mid+(high-mid+1)/2] && array[mid+(high-mid+1)/2] <= array[high] && array[high] >= value) {
+                low = mid+1;
+            }else{
+                high = mid-1;
+            }
+        }else {
+            return mid;
+        }
+    }
+    return -1;
+}
+
+int Recycle_Binary_Find1(int array[], int length, int value) {
+    int low = 0;
+    int high = length-1;
+    while (low<=high) {
+        int mid = (low+high)/2;
+        if (value < array[mid]) {
+            if ((array[low] <= array[(low+mid)/2] && array[(low+mid)/2] <= array[mid] && array[low] <= value) || !(array[low] <= array[(low+mid)/2] && array[(low+mid)/2] <= array[mid])) {
+                high = mid-1;
+            }else{
+                low = mid+1;
+            }
+        }else if (value > array[mid]) {
+            if ((array[mid] <= array[(mid+high)/2] && array[(mid+high)/2] <= array[high] && array[high] >= value) || !(array[mid] <= array[(mid+high)/2] && array[(mid+high)/2] <= array[high])) {
+                low = mid+1;
+            }else{
+                high = mid-1;
+            }
+        }else {
+            return mid;
+        }
+    }
+    return -1;
+}
+
+void Find_Once() {
     const int MAXN = 15;
     int a[MAXN] = {1, 347, 6, 9, 13, 65, 889, 712, 889, 347, 1, 9, 65, 13, 712};
     int lostNum = 0;
     for (int i = 0; i < MAXN; i++) {
         lostNum ^= a[i];
-        cout << "lostNum: " << lostNum << endl;;
     }
     cout << "lost one is: " << lostNum << endl;
 }
@@ -190,7 +280,6 @@ void Func_timer(void func(int*, int, int), int array[], int low, int high) {
     endTime = clock();
     cout << "Totle Time : " << (double)(endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;
 }
-
 
 void Random_seed(int array[], int count) {
     int n = count;
@@ -209,9 +298,9 @@ void Output(int array[], int low, int high) {
 
 int main() {
     int array[30] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85, 1, 3, 9, 4, 6, 43, 44, 57, 89, 100, 38, 40, 29, 21, 45, 65, 88, 56, 89, 90};
-    //int b1_array[30] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85, 1, 3, 9, 4, 6, 43, 44, 57, 89, 100, 38, 40, 29, 21, 45, 65, 88, 56, 89, 90};
-    //int b2_array[30] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85, 1, 3, 9, 4, 6, 43, 44, 57, 89, 100, 38, 40, 29, 21, 45, 65, 88, 56, 89, 90};
-    //int short_array[10] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85};
+    int b1_array[30] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85, 1, 3, 9, 4, 6, 43, 44, 57, 89, 100, 38, 40, 29, 21, 45, 65, 88, 56, 89, 90};
+    int b2_array[30] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85, 1, 3, 9, 4, 6, 43, 44, 57, 89, 100, 38, 40, 29, 21, 45, 65, 88, 56, 89, 90};
+    int short_array[10] = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85};
 
     int count = 100;
     int *new_array = new int[count];
@@ -232,12 +321,23 @@ int main() {
     //Func_timer(Bubble2_Sort, rd_array1, 0, 99);
     //Func_timer(Insert2_Sort, rd_array, 0, 99);
     //Func_timer(Select_Sort, rd_array, 0, 99);
+    //Func_timer(Binary_Sort, array, 0, 29);
+    //Func_timer(Bubble2_Sort, array, 0, 29);
+
 
     //Output(array, 0, 29);
     //Output(b1_array, 0, 29);
     //Output(b2_array, 0, 29);
     //Output(short_array, 0, 9);
     //Output(rd_array, 0, 99);
-    Find_Once();
 
+    //Find_Once();
+
+    //int binary_result = Binary_Find1(array, 30, 72);
+    //Output(array, 0, 29);
+    //cout << "binary_result: " << binary_result << " = " << array[binary_result] << endl;
+
+    int recycle_array[20] = {9,10,11,12,13,14,15,16,17,18,19,0,1,2,3,4,5,6,7,8};
+    int recycle_result = Recycle_Binary_Find1(recycle_array, 20, 0);
+    cout << "binary_result: " << recycle_result << " = " << recycle_array[recycle_result] << endl;
 }
