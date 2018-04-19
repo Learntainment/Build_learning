@@ -221,13 +221,13 @@ int Recycle_Binary_Find(int array[], int length, int value) {
     while (low<=high) {
         int mid = low+(high-low+1)/2;
         if (value < array[mid]) {
-            if (array[low] <= array[low+(mid-low+1)/2] && array[low+(mid-low+1)/2] <= array[mid] && array[low] <= value) {
+            if ((array[low] <= array[low+(mid-low+1)/2] && array[low+(mid-low+1)/2] <= array[mid] && array[low] <= value)||!(array[low] <= array[low+(mid-low+1)/2] && array[low+(mid-low+1)/2])) {
                 high = mid-1;
             }else{
                 low = mid+1;
             }
         }else if (value > array[mid]) {
-            if (array[mid] <= array[mid+(high-mid+1)/2] && array[mid+(high-mid+1)/2] <= array[high] && array[high] >= value) {
+            if ((array[mid] <= array[mid+(high-mid+1)/2] && array[mid+(high-mid+1)/2] <= array[high] && array[high] >= value)||!(array[mid] <= array[mid+(high-mid+1)/2] && array[mid+(high-mid+1)/2])) {
                 low = mid+1;
             }else{
                 high = mid-1;
@@ -261,6 +261,33 @@ int Recycle_Binary_Find1(int array[], int length, int value) {
         }
     }
     return -1;
+}
+
+int Recycle_Binary_Find2(int array[], int low, int high, int value) {
+    int left = low;
+    int right = high;
+    if (left>right){
+        return -1;
+    }
+    int mid = (left+right)/2;
+    if (value<array[mid]) {
+        int increase = array[left]<=array[(left+mid)/2]&&array[(left+mid)/2]<=array[mid];
+        if (increase && value>=array[left]||!increase) {
+            right = mid-1;
+        }else {
+            left = mid+1;
+        }
+    }else if (value>array[mid]) {
+        int increase = array[mid]<=array[(mid+right)/2]&&array[(mid+right)/2]<=array[right];
+        if (increase && value<=array[right]||!increase) {
+            left = mid+1;
+        }else{
+            right = mid-1;
+        }
+    }else{
+        return mid;
+    }
+    Recycle_Binary_Find2(array, left, right, value);
 }
 
 void Find_Once() {
@@ -337,7 +364,7 @@ int main() {
     //Output(array, 0, 29);
     //cout << "binary_result: " << binary_result << " = " << array[binary_result] << endl;
 
-    int recycle_array[20] = {9,10,11,12,13,14,15,16,17,18,19,0,1,2,3,4,5,6,7,8};
-    int recycle_result = Recycle_Binary_Find1(recycle_array, 20, 0);
+    int recycle_array[20] = {8,9,10,11,12,13,14,15,16,17,18,19,0,1,2,3,4,5,6,7};
+    int recycle_result = Recycle_Binary_Find2(recycle_array, 0, 19, 0);
     cout << "binary_result: " << recycle_result << " = " << recycle_array[recycle_result] << endl;
 }
