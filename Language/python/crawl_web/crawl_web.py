@@ -38,7 +38,7 @@ def get_page_encode(seed_url, header_url):
     page_encode = None
     try:
         page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers=header_url)).read()
-        #file_store('./iread.html', page_bytes)
+        #file_store('./baidupan.html', page_bytes)
         page_encode = chardet.detect(page_bytes)
     except EncodeError:
         pass
@@ -105,7 +105,7 @@ def get_whole_page_url(header_url, header):
             if test_name:
                 page_number = page_number + 1
                 list_url.append(test_url)
-                print ("list name ", test_name)
+                #print ("list name ", test_name)
                 #time.sleep(2)
             else:
                 break
@@ -122,9 +122,6 @@ def select_data_from_mysql():
         # 执行sql语句
         select_cursor.execute(select_sql)
         select_results = select_cursor.fetchall()
-
-        #for select_list in select_results:
-        #    print ("select name: %s, select count: %d" % (select_list[0], int(select_list[2])))
     except:
         print ("select error msg")
     select_db.close()
@@ -157,6 +154,20 @@ def draw_data_echart(select_results):
     bar.use_theme('light')
     bar.add("book download count", list_name, list_count, is_more_utils = True, is_label_show = True, is_datazoom_show = True)
     bar.render("downloadcount.html")
+
+def get_final_url(select_results):
+    for final_list in select_results:
+        final_url = 'http://www.ireadweek.com' + final_list[3]
+        final_page_encode = get_page_encode(final_url, header)
+        final_page_html = get_page_html(final_url, header, 3, final_page_encode)
+        final_html_query = pq(final_page_html)
+        final_link_list = final_html_query('.hanghang-shu-content-btn')
+        download_link = final_link_list.find('a').attr('href')
+        write_file = final_list[0] + ' --- ' + download_link
+        file_handle = open("./panlink.txt", 'a+')
+        file_handle.write(write_file)
+        file_handle.write('\n')
+        file_handle.close()
 
 def sub_sort(array,low,high):
     key = array[low]
@@ -204,24 +215,23 @@ if __name__ == "__main__":
 
     results = select_data_from_mysql()
     #draw_data_matplot(results)
+    get_final_url(results)
     draw_data_echart(results)
 
+    '''
     # test mysql update
     #test_url = 'http://www.ireadweek.com/index.php/index/16.html'
-    '''test_url = 'http://www.ireadweek.com/index.php/index/168.html'
+    #test_url = 'http://pan.baidu.com/s/1qY91y0G'
+    test_url = 'http://www.ireadweek.com/index.php/bookInfo/11043.html'
+
     page_encode = get_page_encode(test_url, header)
-
     page_html = get_page_html(test_url, header, 3, page_encode)
-
-    collect_data(page_html, 9)
+    #collect_data(page_html, 9)
+    html_query = pq(page_html)
+    link_list = html_query('.hanghang-shu-content-btn')
+    print (link_list.find('a').attr('href'))
+    print (type(link_list.find('a').attr('href')))
     '''
-
-    '''plt.plot([1, 2, 3, 4])
-    plt.ylabel('some numbers')
-    plt.show()
-    '''
-
-
 
 
 
