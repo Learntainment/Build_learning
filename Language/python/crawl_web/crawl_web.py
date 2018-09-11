@@ -5,10 +5,11 @@ import ssl
 import pymysql
 import re
 import matplotlib.pyplot as plt
-import time
 
 from pyecharts import Bar
 from pyquery import PyQuery as pq
+from threading import Thread
+from time import time
 
 # 通过指定的字符集对页面进行解码(不是每个网站都将字符集设置为utf-8)
 def decode_page(page_bytes, charset='utf-8'):
@@ -71,6 +72,36 @@ def collect_data(page_html, start_index):
             store_data(final_book_name, final_book_author, book_download_num, href_list)
         else:
             break
+
+# multi-thread analyze data with pyquery
+def multi_thread_collect_data(page_html, start_index):
+    html_query = pq(page_html)
+    query_index = start_index
+    DB_threads = []
+    while (1):
+        href_list = html_query('a').eq(query_index).attr('href')
+        book_name = pq(html_query('a').eq(query_index)).find('.hanghang-list-name').text()
+        re_book_name = re.sub(r'\'+', ' ', book_name)
+        final_book_name = re.sub(r'\"+', ' ', re_book_name)
+        book_download_num = pq(html_query('a').eq(query_index)).find('.hanghang-list-num').text()
+        book_author = pq(html_query('a').eq(query_index)).find('.hanghang-list-zuozhe').text()
+        re_book_author = re.sub(r'\'+', ' ', book_author)
+        final_book_author = re.sub(r'\"+', ' ', re_book_author)
+        if book_name:
+            query_index = query_index + 1
+            #print("book_name: %s ,book num: %s ,book_author: %s, book link: %s" % (book_name, book_download_num, book_author, href_list))
+
+            # multi_thread database store all info
+            t = Thread(target=store_data, args=(final_book_name, final_book_author, book_download_num, href_list))
+            DB_threads.append(t)
+            t.start()
+            #store_data(final_book_name, final_book_author, book_download_num, href_list)
+        else:
+            break
+    # wait for all DB operation finish
+    for t in DB_threads:
+        t.join()
+
 
 # store data into pymysql
 def store_data(g_name, g_author, g_downloadcount, g_link):
@@ -169,6 +200,15 @@ def get_final_url(select_results):
         file_handle.write('\n')
         file_handle.close()
 
+def multi_thread_get_html(url_unit, header, queue_num):
+    # get page encode
+    page_encode = get_page_encode(url_unit, header)
+    # get page html
+    page_html = get_page_html(url_unit, header, 3, page_encode)
+    # get html data
+    multi_thread_collect_data(page_html, queue_num)
+
+
 def sub_sort(array,low,high):
     key = array[low]
     while low < high:
@@ -191,6 +231,7 @@ def quick_sort(array,low,high):
 if __name__ == "__main__":
     #url = 'https://www.671cf.com/htm/index.htm'
     #url = 'https://www.gavbus.com/'
+    start = time()
     url = 'http://www.ireadweek.com/'
     header = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.84 Safari/537.36'}
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -199,7 +240,8 @@ if __name__ == "__main__":
     search_list = []
     search_list = get_whole_page_url(url, header)
     cycle_flag = 0
-    for url_unit in search_list:
+    GH_threads = []
+    '''for url_unit in search_list:
         print ("---------url-------", url_unit)
         if cycle_flag:
             queue_num = 7
@@ -212,11 +254,26 @@ if __name__ == "__main__":
         page_html = get_page_html(url_unit, header, 3, page_encode)
         # get html data
         collect_data(page_html, queue_num)
+    '''
+    for url_unit in search_list:
+        print ("---------url-------", url_unit)
+        if cycle_flag:
+            queue_num = 7
+        else:
+            cycle_flag = 1
+            queue_num = 9
+        t = Thread(target=multi_thread_get_html, args=(url_unit, header, queue_num))
+        GH_threads.append(t)
+        t.start()
+    for t in GH_threads:
+        t.join()
 
     results = select_data_from_mysql()
     #draw_data_matplot(results)
     get_final_url(results)
     draw_data_echart(results)
+    end = time()
+    print('cost time is %.3f s ' %(end - start))
 
     '''
     # test mysql update
