@@ -10,13 +10,13 @@ from pyecharts import Bar
 from pyquery import PyQuery as pq
 from threading import Thread
 from time import time
+from goto import with_goto
 
 # 通过指定的字符集对页面进行解码(不是每个网站都将字符集设置为utf-8)
 def decode_page(page_bytes, charset='utf-8'):
     page_html = None
     try:
         page_html = page_bytes.decode(charset)
-
     except UnicodeDecodeError:
         pass
         # logging.error('Decode:', error)
@@ -24,6 +24,7 @@ def decode_page(page_bytes, charset='utf-8'):
 
 # 获取页面的HTML代码(通过递归实现指定次数的重试操作)
 def get_page_html(seed_url, header_url, retry_times=3, charset='utf-8'):
+    print ("----page html-------")
     page_html = None
     try:
         page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers = header_url)).read()
@@ -36,6 +37,7 @@ def get_page_html(seed_url, header_url, retry_times=3, charset='utf-8'):
 
 # 获得页面的编码格式
 def get_page_encode(seed_url, header_url):
+    print ("----page encode-------")
     page_encode = None
     try:
         page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers=header_url)).read()
@@ -89,19 +91,16 @@ def multi_thread_collect_data(page_html, start_index):
         final_book_author = re.sub(r'\"+', ' ', re_book_author)
         if book_name:
             query_index = query_index + 1
-            #print("book_name: %s ,book num: %s ,book_author: %s, book link: %s" % (book_name, book_download_num, book_author, href_list))
-
+            print("book_name: %s ,book num: %s ,book_author: %s, book link: %s" % (book_name, book_download_num, book_author, href_list))
             # multi_thread database store all info
             t = Thread(target=store_data, args=(final_book_name, final_book_author, book_download_num, href_list))
             DB_threads.append(t)
             t.start()
-            #store_data(final_book_name, final_book_author, book_download_num, href_list)
         else:
             break
     # wait for all DB operation finish
     for t in DB_threads:
         t.join()
-
 
 # store data into pymysql
 def store_data(g_name, g_author, g_downloadcount, g_link):
@@ -123,26 +122,27 @@ def store_data(g_name, g_author, g_downloadcount, g_link):
         db.commit()
     db.close()
 
-def get_whole_page_url(header_url, header):
-    list_url = []
-    page_number = 1
-    while(1):
-        test_url = header_url + 'index.php/index/' + str(page_number) + '.html'
-        test_header = header
-        try:
-            test_html = urllib.request.urlopen(urllib.request.Request(test_url, headers=test_header)).read()
-            test_query = pq(test_html)
-            test_name = pq(test_query('a').eq(7)).find('.hanghang-list-name').text()
-            if test_name:
-                page_number = page_number + 1
-                list_url.append(test_url)
-                #print ("list name ", test_name)
-                #time.sleep(2)
+@with_goto
+def get_url_request_handle(header_url, header):
+    retry_count = 3
+    first_url = header_url + 'index.php/index/1.html'
+    label .retry
+    try:
+        first_html = urllib.request.urlopen(urllib.request.Request(first_url, headers=header), timeout=0.5).read()
+    except Exception as e:
+        if str(e) == "timed out":
+            if (retry_count > 0):
+                print ("urlopen error timed out retry!")
+                retry_count = retry_count - 1
+                goto .retry
             else:
-                break
-        except URLError:
-            break
-    return list_url
+                raise Exception('urlopen error timed out more than three times!')
+        else:
+            raise Exception('exception error!')
+    html_query = pq(first_html)
+    link_list = html_query('.action-pagination')
+    page_number = int(link_list.find('a').eq(6).attr('href').split('/')[3].split('.')[0])
+    return page_number
 
 # select mysql data to chart
 def select_data_from_mysql():
@@ -165,8 +165,6 @@ def draw_data_matplot(select_results):
     for select_list in select_results:
         list_name.append(select_list[0])
         list_count.append(int(select_list[2]))
-        #print ("select name: %s, select count: %d" % (select_list[0], int(select_list[2])))
-    #plt.plot(list_count, 'bs')
     quick_sort(list_count, 0, len(list_count)-1)
     for i in list_count:
         print ("quick sort: ", i)
@@ -208,7 +206,6 @@ def multi_thread_get_html(url_unit, header, queue_num):
     # get html data
     multi_thread_collect_data(page_html, queue_num)
 
-
 def sub_sort(array,low,high):
     key = array[low]
     while low < high:
@@ -227,36 +224,19 @@ def quick_sort(array,low,high):
         quick_sort(array,low,key_index)
         quick_sort(array,key_index+1,high)
 
-
 if __name__ == "__main__":
-    #url = 'https://www.671cf.com/htm/index.htm'
-    #url = 'https://www.gavbus.com/'
+
     start = time()
     url = 'http://www.ireadweek.com/'
     header = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.84 Safari/537.36'}
     ssl._create_default_https_context = ssl._create_unverified_context
 
-    # get all page url list
-    search_list = []
-    search_list = get_whole_page_url(url, header)
+    # get all page url count
+    page_count = get_url_request_handle(url, header)
     cycle_flag = 0
     GH_threads = []
-    '''for url_unit in search_list:
-        print ("---------url-------", url_unit)
-        if cycle_flag:
-            queue_num = 7
-        else:
-            cycle_flag = 1
-            queue_num = 9
-        # get page encode
-        page_encode = get_page_encode(url_unit, header)
-        # get page html
-        page_html = get_page_html(url_unit, header, 3, page_encode)
-        # get html data
-        collect_data(page_html, queue_num)
-    '''
-    for url_unit in search_list:
-        print ("---------url-------", url_unit)
+    for n in range(1, int(page_count)):
+        url_unit = "http://www.ireadweek.com/index.php/index/" + str(n) + ".html"
         if cycle_flag:
             queue_num = 7
         else:
@@ -275,19 +255,20 @@ if __name__ == "__main__":
     end = time()
     print('cost time is %.3f s ' %(end - start))
 
-    '''
-    # test mysql update
+    '''# -----test-----
     #test_url = 'http://www.ireadweek.com/index.php/index/16.html'
     #test_url = 'http://pan.baidu.com/s/1qY91y0G'
-    test_url = 'http://www.ireadweek.com/index.php/bookInfo/11043.html'
-
+    test_url = 'http://www.ireadweek.com/index.php/index/1.html'
     page_encode = get_page_encode(test_url, header)
     page_html = get_page_html(test_url, header, 3, page_encode)
     #collect_data(page_html, 9)
     html_query = pq(page_html)
-    link_list = html_query('.hanghang-shu-content-btn')
-    print (link_list.find('a').attr('href'))
-    print (type(link_list.find('a').attr('href')))
+    link_list = html_query('.action-pagination')
+    print (link_list)
+    print (link_list.find('a').eq(6).attr('href'))
+    number = link_list.find('a').eq(6).attr('href')
+    print (number.split('/')[3].split('.')[0])
+    print (type(int(number.split('/')[3].split('.')[0])))
     '''
 
 
