@@ -12,6 +12,9 @@ from threading import Thread
 from time import time
 from goto import with_goto
 
+# global value setting
+url_list = []
+
 # 通过指定的字符集对页面进行解码(不是每个网站都将字符集设置为utf-8)
 def decode_page(page_bytes, charset='utf-8'):
     page_html = None
@@ -27,12 +30,17 @@ def get_page_html(seed_url, header_url, retry_times=3, charset='utf-8'):
     print ("----page html-------")
     page_html = None
     try:
-        page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers = header_url)).read()
+        page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers = header_url), timeout=1).read()
         page_html = decode_page(page_bytes, charset)
-    except URLError:
-        # logging.error('URL:', error)
-        if retry_times > 0:
-            return get_page_html(seed_url, header_url, retry_times=retry_times - 1, charset=charset)
+    except Exception as e:
+        if str(e) == "timed out":
+            if (retry_times > 0):
+                print ("urlopen error timed out retry!")
+                return get_page_html(seed_url, header_url, retry_times=retry_times - 1, charset=charset)
+            else:
+                return -1
+        else:
+            raise Exception('get html exception error!')
     return page_html
 
 # 获得页面的编码格式
@@ -187,8 +195,8 @@ def draw_data_echart(select_results):
 def get_final_url(select_results):
     for final_list in select_results:
         final_url = 'http://www.ireadweek.com' + final_list[3]
-        final_page_encode = get_page_encode(final_url, header)
-        final_page_html = get_page_html(final_url, header, 3, final_page_encode)
+        #final_page_encode = get_page_encode(final_url, header)
+        final_page_html = get_page_html(final_url, header, 3)
         final_html_query = pq(final_page_html)
         final_link_list = final_html_query('.hanghang-shu-content-btn')
         download_link = final_link_list.find('a').attr('href')
@@ -200,11 +208,17 @@ def get_final_url(select_results):
 
 def multi_thread_get_html(url_unit, header, queue_num):
     # get page encode
-    page_encode = get_page_encode(url_unit, header)
+    #page_encode = get_page_encode(url_unit, header)
     # get page html
-    page_html = get_page_html(url_unit, header, 3, page_encode)
-    # get html data
-    multi_thread_collect_data(page_html, queue_num)
+    page_html = get_page_html(url_unit, header, 3)
+    if (page_html == -1):
+        global url_list
+        print ("get html timed out! append the url list!")
+        url_list.append(url_unit)
+    else:
+        return 0
+        # get html data
+        #multi_thread_collect_data(page_html, queue_num)
 
 def sub_sort(array,low,high):
     key = array[low]
@@ -247,20 +261,21 @@ if __name__ == "__main__":
         t.start()
     for t in GH_threads:
         t.join()
-
+    print ("url check list is : ", url_list)
+    '''
     results = select_data_from_mysql()
     #draw_data_matplot(results)
     get_final_url(results)
     draw_data_echart(results)
     end = time()
     print('cost time is %.3f s ' %(end - start))
-
+    '''
     '''# -----test-----
     #test_url = 'http://www.ireadweek.com/index.php/index/16.html'
     #test_url = 'http://pan.baidu.com/s/1qY91y0G'
     test_url = 'http://www.ireadweek.com/index.php/index/1.html'
-    page_encode = get_page_encode(test_url, header)
-    page_html = get_page_html(test_url, header, 3, page_encode)
+    #page_encode = get_page_encode(test_url, header)
+    page_html = get_page_html(test_url, header, 3)
     #collect_data(page_html, 9)
     html_query = pq(page_html)
     link_list = html_query('.action-pagination')
