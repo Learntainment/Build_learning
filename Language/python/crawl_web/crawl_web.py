@@ -26,17 +26,21 @@ def decode_page(page_bytes, charset='utf-8'):
     return page_html
 
 # 获取页面的HTML代码(通过递归实现指定次数的重试操作)
+@with_goto
 def get_page_html(seed_url, header_url, retry_times=3, charset='utf-8'):
     print ("----page html-------")
     page_html = None
+    label .get_page_retry
     try:
-        page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers = header_url), timeout=1).read()
+        page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers = header_url), timeout=10).read()
         page_html = decode_page(page_bytes, charset)
     except Exception as e:
-        if str(e) == "timed out":
+        print ("-------exception-----: " ,str(e))
+        if ((str(e) == "timed out") or (str(e) == "<urlopen error timed out>")):
             if (retry_times > 0):
                 print ("urlopen error timed out retry!")
-                return get_page_html(seed_url, header_url, retry_times=retry_times - 1, charset=charset)
+                retry_times = retry_times - 1
+                goto .get_page_retry
             else:
                 return -1
         else:
@@ -136,9 +140,9 @@ def get_url_request_handle(header_url, header):
     first_url = header_url + 'index.php/index/1.html'
     label .retry
     try:
-        first_html = urllib.request.urlopen(urllib.request.Request(first_url, headers=header), timeout=0.5).read()
+        first_html = urllib.request.urlopen(urllib.request.Request(first_url, headers=header), timeout=1).read()
     except Exception as e:
-        if str(e) == "timed out":
+        if ((str(e) == "timed out") or (str(e) == "<urlopen error timed out>")):
             if (retry_count > 0):
                 print ("urlopen error timed out retry!")
                 retry_count = retry_count - 1
@@ -216,6 +220,7 @@ def multi_thread_get_html(url_unit, header, queue_num):
         print ("get html timed out! append the url list!")
         url_list.append(url_unit)
     else:
+        print("-----------finish get html ----------")
         return 0
         # get html data
         #multi_thread_collect_data(page_html, queue_num)
