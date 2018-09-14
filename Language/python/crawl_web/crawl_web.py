@@ -28,14 +28,13 @@ def decode_page(page_bytes, charset='utf-8'):
 # 获取页面的HTML代码(通过递归实现指定次数的重试操作)
 @with_goto
 def get_page_html(seed_url, header_url, retry_times=3, charset='utf-8'):
-    print ("----page html-------")
+    #print ("----page html-------")
     page_html = None
     label .get_page_retry
     try:
         page_bytes = urllib.request.urlopen(urllib.request.Request(seed_url, headers = header_url), timeout=10).read()
         page_html = decode_page(page_bytes, charset)
     except Exception as e:
-        print ("-------exception-----: " ,str(e))
         if ((str(e) == "timed out") or (str(e) == "<urlopen error timed out>")):
             if (retry_times > 0):
                 print ("urlopen error timed out retry!")
@@ -220,10 +219,10 @@ def multi_thread_get_html(url_unit, header, queue_num):
         print ("get html timed out! append the url list!")
         url_list.append(url_unit)
     else:
-        print("-----------finish get html ----------")
-        return 0
+        #print("-----------finish get html ----------")
+        #return 0
         # get html data
-        #multi_thread_collect_data(page_html, queue_num)
+        multi_thread_collect_data(page_html, queue_num)
 
 def sub_sort(array,low,high):
     key = array[low]
@@ -266,15 +265,29 @@ if __name__ == "__main__":
         t.start()
     for t in GH_threads:
         t.join()
+
+    # check if url list is empty
     print ("url check list is : ", url_list)
-    '''
-    results = select_data_from_mysql()
-    #draw_data_matplot(results)
-    get_final_url(results)
-    draw_data_echart(results)
+    retry_list = url_list
+    RE_threads = []
+    if retry_list:
+        for retry_n in retry_list:
+            url_list.remove(retry_n)
+            t = Thread(target=multi_thread_get_html, args=(retry_n, header, 9))
+            RE_threads.append(t)
+            t.start()
+        for t in RE_threads:
+            t.join()
+
+    else:
+        results = select_data_from_mysql()
+        #draw_data_matplot(results)
+        get_final_url(results)
+        draw_data_echart(results)
+    print ("url retry check list is : ", url_list)
     end = time()
     print('cost time is %.3f s ' %(end - start))
-    '''
+
     '''# -----test-----
     #test_url = 'http://www.ireadweek.com/index.php/index/16.html'
     #test_url = 'http://pan.baidu.com/s/1qY91y0G'
@@ -290,7 +303,3 @@ if __name__ == "__main__":
     print (number.split('/')[3].split('.')[0])
     print (type(int(number.split('/')[3].split('.')[0])))
     '''
-
-
-
-
